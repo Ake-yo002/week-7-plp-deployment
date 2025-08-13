@@ -2,9 +2,16 @@
   "name": "server",
   "version": "1.0.0",
   "main": "server.js",
+
+  
+  "engines": {
+    "node": ">=18",
+    "pnpm": ">=8"
+  },
   "scripts": {
     "dev": "nodemon server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "render-setup": "npm i -g pnpm@8"
   },
   "keywords": [],
   "author": "",

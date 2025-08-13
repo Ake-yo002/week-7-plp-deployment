@@ -1,5 +1,4 @@
 // server.js - Main server file for Socket.io chat application
-
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -7,13 +6,11 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
 const fs = require('fs');
-const connectDB = require('./config/db');
+const mongoose = require('mongoose');
 const errorHandler = require('./middleware/errorHandler');
 const socketHandler = require('./socket'); // ✅ your modular socket handler
-const mongoose = require('mongoose');
-dotenv.config();
 
-mongoose.connect(process.env.MONGODB_URI);
+dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
@@ -25,6 +22,7 @@ const io = new Server(server, {
   },
 });
 
+// Middlewares
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -42,10 +40,10 @@ rooms.forEach(room => {
   }
 });
 
-// ✅ 🔥 Replace entire io.on connection with:
-socketHandler(io); // <--- this handles all socket events modularly
+// ✅ Modular socket handler
+socketHandler(io);
 
-// ✅ Task 3.5 – Route to save messages to file
+// Routes
 app.post('/api/save/:room', (req, res) => {
   const room = req.params.room;
   const data = JSON.stringify(messages[room] || [], null, 2);
@@ -66,8 +64,7 @@ app.get('/api/messages/:room', (req, res) => {
 });
 
 app.get('/api/users', (req, res) => {
-  // This route remains; it will be updated in your controller if needed later
-  res.json([]); // placeholder since users are handled inside socket module now
+  res.json([]); // placeholder
 });
 
 app.get('/api/rooms', (req, res) => {
@@ -80,9 +77,21 @@ app.get('/', (req, res) => {
 
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// ✅ Connect to MongoDB first, then start server
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => {
+  console.log('✅ MongoDB connected');
+  const PORT = process.env.PORT || 5000;
+  server.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+  });
+})
+.catch((err) => {
+  console.error('❌ MongoDB connection error:', err);
+  process.exit(1); // Stop server if DB fails
 });
 
 module.exports = { app, server, io };
